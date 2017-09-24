@@ -27,7 +27,7 @@
 			})
 		}
 
-		var socket = io('http://' + window.location.host)
+		var socket = io(window.location.protocol + '//' + window.location.host)
 		socket.on('state', function(data) {
 
 			// Clear frame
