@@ -123,7 +123,7 @@ function Player() {
 		this.y = 5,
 		this.oldX = this.x,
 		this.oldY = this.y,
-		this.size = 1,
+		this.size = 0.75,
 		this.rotation = 0,
 
 		this.special = {
@@ -153,10 +153,14 @@ function Player() {
 		},
 
 		this.action = function() {
+
 			// Food collision
-			if (this.x == foodX && this.y == foodY) {
-				this.rotation += 0
+			if (gameState[this.x][this.y] == 2) {
 				this.size += 0.5
+
+				if (this.special.blocks < 15) {
+					this.special.blocks += 3
+				}
 
 				// New food
 				foodX = Math.floor(Math.random() * boardSize)
