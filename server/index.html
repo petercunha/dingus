@@ -1,14 +1,20 @@
 <!DOCTYPE html>
 <html>
+
 <head>
 	<title>Game</title>
 </head>
+
 <body>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/4.5.6/pixi.min.js"></script>
 	<script>
+		// Stores player objects
+		var players = []
 
-		var app = new PIXI.Application(800, 600, {backgroundColor : 0x1099bb});
+		var app = new PIXI.Application(800, 600, {
+			backgroundColor: 0x1099bb
+		});
 		document.body.appendChild(app.view);
 
 		var rotationSpeed = 0.1;
@@ -16,8 +22,9 @@
 		// create a new Sprite from an image path
 		var fly = PIXI.Sprite.fromImage('https://i.imgur.com/uJL46V8.png')
 
-		// center the sprite's anchor 
+		// center the sprite's anchor
 		fly.anchor.set(0.5);
+		fly.name = "fly";
 
 		// move the sprite to the center of the screen
 		fly.x = app.renderer.width / 2
@@ -26,66 +33,89 @@
 		app.stage.addChild(fly);
 
 		function move(dir) {
-			socket.emit('move', { direction: dir })
+			socket.emit('move', {
+				direction: dir
+			})
 		}
 
-		var socket = io('http://10.186.82.204')
-		socket.on('state', function (data) {
-			console.log(data)
-			for (var i = 0; i < data.state.length; i++) {
-				for (var j = 0; j < data.state[0].length; j++) {
-					if (data.state[i][j] != 2 && data.state[i][j] != 0) {
-						var bunny = PIXI.Sprite.fromImage('https://pixijs.github.io/examples/required/assets/basics/bunny.png')
-						
-						bunny.anchor.set(0.5);
+		var socket = io('http://localhost:3000')
+		socket.on('state', function(data) {
 
-						// move the sprite to the center of the screen
+			// Clear frame
+			for (var i = app.stage.children.length - 1; i >= 0; i--) {
+				if (app.stage.children[i].name != "fly") {
+					app.stage.removeChild(app.stage.children[i])
+				}
+			}
+
+			for (var i = 0; i < data.state.length; i++) {
+				for (var j = 0; j < data.state.length; j++) {
+					if (data.state[i][j].id) {
+						var player, bunny
+						player = data.state[i][j]
+						bunny = PIXI.Sprite.fromImage('https://pixijs.github.io/examples/required/assets/basics/bunny.png')
+						bunny.anchor.set(0.5)
+						bunny.scale.x += player.size
+						bunny.scale.y += player.size
 						bunny.x = i * 50 + 25
 						bunny.y = j * 50 + 25
-
-						app.stage.addChild(bunny);
-
-						// Listen for animate update
+						bunny.id = player.id
 						app.ticker.add(function(delta) {
-							// just for fun, let's rotate mr rabbit a little
-							// delta is 1 if running at 100% performance
-							// creates frame-independent tranformation
-							bunny.rotation += 0.1 * delta;
-						});
+							bunny.rotation += player.rotation * delta;
+						})
+
+						// var set = false
+						// for (var k = app.stage.children.length - 1; k >= 0; k--) {
+						// 	if (app.stage.children[k].name != "fly") {
+						// 		if (app.stage.children[k].id == player.id) {
+						// 			set = true
+						// 			if (bunny.x != app.stage.children[k].x || bunny.y != app.stage.children[k].y) {
+						// 				app.stage.removeChild(app.stage.children[k])
+						// 				app.stage.addChild(bunny)
+						// 			}
+						// 		}
+						// 	}
+						// }
+						//
+						// if (!set) {
+						app.stage.addChild(bunny)
+
 					} else if (data.state[i][j] == 2) {
 						fly.x = i * 50 + 25
 						fly.y = j * 50 + 25
 					}
 				}
 			}
+
+
 		})
 
-		socket.on('update', function(data) {
-            rotationSpeed = data.rotation
-            bunny.scale.x += 0.5
-            bunny.scale.y += 0.5
-        })
+
+
+		socket.on('dead', function(data) {
+			alert("You died! Refresh to play again.")
+		})
 
 		var dir = '';
-	   document.addEventListener("keydown", keyboardInput, false)
+		document.addEventListener("keydown", keyboardInput, false)
 
-	   function keyboardInput(e) {
-	   		console.log("good");
-	        if(e.keyCode == 38){
-	            dir = "up"
-	        }
-	        if (e.keyCode == 40) {
-	            dir = "down";
-	        }
-	        if (e.keyCode == 37) {
-	            dir = "left";
-	        }
-	        if(e.keyCode == 39){
-	            dir = "right";
-	        }
-	        move(dir)
-	    }
-
+		function keyboardInput(e) {
+			console.log("good");
+			if (e.keyCode == 38) {
+				dir = "up"
+			}
+			if (e.keyCode == 40) {
+				dir = "down";
+			}
+			if (e.keyCode == 37) {
+				dir = "left";
+			}
+			if (e.keyCode == 39) {
+				dir = "right";
+			}
+			move(dir)
+		}
 	</script>
 </body>
+
 </html>

@@ -2,88 +2,134 @@ var app = require('http').createServer(handler)
 var io = require('socket.io')(app);
 var fs = require('fs');
 
-app.listen(80);
+app.listen(3000);
 
-function handler (req, res) {
-  fs.readFile(__dirname + '/index.html',
-  function (err, data) {
-    if (err) {
-      res.writeHead(500)
-      return res.end('Error loading index.html')
-    }
+function handler(req, res) {
+	fs.readFile(__dirname + '/index.html',
+		function(err, data) {
+			if (err) {
+				res.writeHead(500)
+				return res.end('Error loading index.html')
+			}
 
-    res.writeHead(200)
-    res.end(data)
-  })
+			res.writeHead(200)
+			res.end(data)
+		})
 }
 
-io.on('connection', function (socket) {
-  var index = players.length
-  players.push(new Player())
+io.on('connection', function(socket) {
 
-  socket.emit('state', { state: gameState })
-  socket.on('move', function (data) {
+	// Add player and get reference as "me" variable
+	players.push(new Player())
+	var playerIndex = players.length-1
+	var me = players[playerIndex]
+
+	socket.emit('state', {
+		state: gameState
+	})
+
+	socket.on('move', function(data) {
+		if (!me.alive) {
+			socket.emit('dead', {
+				status: 'dead'
+			})
+			players = players.splice(playerIndex, 1)
+			return
+		}
+
     if (data.direction == "up")
-      if (players[index].y > 0) players[index].y--
+      if (me.y > 0) me.updatePos(0, -1)
     if (data.direction == "down")
-      if (players[index].y < gameState.length-1) players[index].y++
+      if (me.y < gameState.length-1) me.updatePos(0, 1)
     if (data.direction == "left")
-      if (players[index].x > 0) players[index].x--
+      if (me.x > 0) me.updatePos(-1, 0)
     if (data.direction == "right")
-      if (players[index].x < gameState[0].length-1) players[index].x++
-    players[index].action()
-    players[index].draw()
-  })
-  console.log(players.length);
+      if (me.x < gameState[0].length-1) me.updatePos(1, 0)
+
+		me.action()
+		me.draw()
+	})
+	console.log(players.length);
 })
 
 function Player() {
-  this.x = 5,
-  this.y = 5,
-  this.size = 1,
-  this.rotation = 0.1,
-  this.action = function() {
-    if (this.x == foodX && this.y == foodY) {
-      this.rotation += 0.1
-      io.sockets.emit('update', { rotation: rotation })
+		this.id = Math.floor(Math.random() * 93513).toString()
+		this.alive = true,
+	  this.x = 5,
+		this.y = 5,
+		this.oldX = this.x,
+		this.oldY = this.y,
+		this.size = 1,
+		this.rotation = 0,
+		this.updatePos = function(dx, dy) {
+			this.oldX = this.x
+			this.oldY = this.y
+			this.x += dx
+			this.y += dy
+		},
+		this.action = function() {
+			// Food collision
+			if (this.x == foodX && this.y == foodY) {
+				this.rotation += 0
+				this.size += 0.5
 
-      // New food
-      foodX = Math.floor(Math.random() * 8)
-      foodY = Math.floor(Math.random() * 8)
-      gameState[foodX][foodY] = 2
-    }
-  },
-  this.draw = function() {
-    for (var i = 0; i < gameState.length; i++)
-      for (var j = 0; j < gameState.length; j++)
-        if (gameState[i][j] != 2)
-          gameState[i][j] = 0
-    gameState[this.x][this.y] = this
-  }
+				// New food
+				foodX = Math.floor(Math.random() * 8)
+				foodY = Math.floor(Math.random() * 8)
+				gameState[foodX][foodY] = 2
+			}
+			var enemy = gameState[this.x][this.y];
+			if (this.x == enemy.x && this.y == enemy.y) {
+				if (enemy.size > this.size) {
+					enemy.size += this.size
+					gameState[this.oldX][this.oldY] = 0
+					this.alive = false
+				} else if (enemy.size < this.size) {
+					this.size += enemy.size
+					gameState[enemy.x][enemy.y] = 0
+					enemy.alive = false
+				} else if (enemy.size == this.size) {
+					this.size = 1
+					enemy.size = 1
+					this.x = this.oldX
+					this.y = this.oldY
+				}
+			}
+		},
+		this.draw = function() {
+			for (var i = 0; i < gameState.length; i++) {
+				for (var j = 0; j < gameState.length; j++) {
+					if (gameState[i][j] == this) {
+						gameState[i][j] = 0
+					}
+				}
+			}
+			gameState[this.x][this.y] = this
+		}
 }
 var players = []
 
-var foodX = 2, foodY = 2
+var foodX = 2,
+	foodY = 2
 var gameState = [
-  [0, 0, 0, 0, 0, 0, 0, 0], 
-  [0, 0, 0, 0, 0, 0, 0, 0], 
-  [0, 0, 0, 0, 0, 0, 0, 0], 
-  [0, 0, 0, 0, 0, 0, 0, 0], 
-  [0, 0, 0, 0, 0, 0, 0, 0], 
-  [0, 0, 0, 0, 0, 0, 0, 0], 
-  [0, 0, 0, 0, 0, 0, 0, 0], 
-  [0, 0, 0, 0, 0, 0, 0, 0]
+	[0, 0, 0, 0, 0, 0, 0, 0],
+	[0, 0, 0, 0, 0, 0, 0, 0],
+	[0, 0, 0, 0, 0, 0, 0, 0],
+	[0, 0, 0, 0, 0, 0, 0, 0],
+	[0, 0, 0, 0, 0, 0, 0, 0],
+	[0, 0, 0, 0, 0, 0, 0, 0],
+	[0, 0, 0, 0, 0, 0, 0, 0],
+	[0, 0, 0, 0, 0, 0, 0, 0]
 ]
 // Set players positions
 for (var i = 0; i < players.length; i++) {
-  gameState[players[i].x, players[i].y] = players[i]
+	gameState[players[i].x, players[i].y] = players[i]
 }
 gameState[foodX][foodY] = 2
 
-// Fun stuff
-var rotation = 0.1
-
 function updateClients() {
-  io.sockets.emit('state', { state: gameState })
+	io.sockets.emit('state', {
+		state: gameState
+	})
 }
 setInterval(updateClients, 50);
