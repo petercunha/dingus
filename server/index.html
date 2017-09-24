@@ -9,27 +9,16 @@
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/4.5.6/pixi.min.js"></script>
 	<script>
-		// Stores player objects
-		var players = []
-
-		var app = new PIXI.Application(800, 600, {
+		var app = new PIXI.Application(1200, 600, {
 			backgroundColor: 0x1099bb
 		});
 		document.body.appendChild(app.view);
 
-		var rotationSpeed = 0.1;
-
-		// create a new Sprite from an image path
 		var fly = PIXI.Sprite.fromImage('https://i.imgur.com/uJL46V8.png')
-
-		// center the sprite's anchor
 		fly.anchor.set(0.5);
 		fly.name = "fly";
-
-		// move the sprite to the center of the screen
 		fly.x = app.renderer.width / 2
 		fly.y = app.renderer.height / 2
-
 		app.stage.addChild(fly);
 
 		function move(dir) {
@@ -50,7 +39,7 @@
 
 			for (var i = 0; i < data.state.length; i++) {
 				for (var j = 0; j < data.state.length; j++) {
-					if (data.state[i][j].id) {
+					if (data.state[i][j] && data.state[i][j].id) {
 						var player, bunny
 						player = data.state[i][j]
 						bunny = PIXI.Sprite.fromImage('https://pixijs.github.io/examples/required/assets/basics/bunny.png')
@@ -83,13 +72,26 @@
 					} else if (data.state[i][j] == 2) {
 						fly.x = i * 50 + 25
 						fly.y = j * 50 + 25
+					} else if (data.state[i][j] && data.state[i][j].type == "WALL") {
+						// create a new Sprite from an image path
+						var block = PIXI.Sprite.fromImage('https://i.imgur.com/AmYJ40P.png')
+
+						// center the sprite's anchor
+						block.anchor.set(0.5);
+						block.name = "block";
+
+						// move the sprite to the center of the screen
+						block.x = i * 50 + 25
+						block.y = j * 50 + 25
+
+						app.stage.addChild(block);
 					}
 				}
 			}
 		})
 
 		socket.on('dead', function(data) {
-			alert("You died! Refresh to play again.")
+			location.reload()
 		})
 
 		var dir = '';
@@ -97,17 +99,20 @@
 
 		function keyboardInput(e) {
 			console.log("good");
-			if (e.keyCode == 38) {
+			if (e.keyCode == 38 || e.keyCode == 87) {
 				dir = "up"
 			}
-			if (e.keyCode == 40) {
+			if (e.keyCode == 40 || e.keyCode == 83) {
 				dir = "down";
 			}
-			if (e.keyCode == 37) {
+			if (e.keyCode == 37 || e.keyCode == 65) {
 				dir = "left";
 			}
-			if (e.keyCode == 39) {
+			if (e.keyCode == 39 || e.keyCode == 68) {
 				dir = "right";
+			}
+			if (e.keyCode == 32) {
+				dir = "space";
 			}
 			move(dir)
 		}
