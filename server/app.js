@@ -49,7 +49,14 @@ io.on('connection', function(socket) {
 		me.action()
 		me.draw()
 	})
-	console.log(players.length);
+
+	socket.on('disconnect', function() {
+		me.alive = false
+		gameState[me.x][me.y] = 0
+		players = players.splice(playerIndex, 1)
+		console.log("Online players: " + players.length);
+	});
+	console.log("Online players: " + players.length);
 })
 
 function Player() {
@@ -78,8 +85,9 @@ function Player() {
 				foodY = Math.floor(Math.random() * 8)
 				gameState[foodX][foodY] = 2
 			}
+
 			var enemy = gameState[this.x][this.y];
-			if (this.x == enemy.x && this.y == enemy.y) {
+			if (enemy != 0 && this.x == enemy.x && this.y == enemy.y) {
 				if (enemy.size > this.size) {
 					enemy.size += this.size
 					gameState[this.oldX][this.oldY] = 0
@@ -89,8 +97,6 @@ function Player() {
 					gameState[enemy.x][enemy.y] = 0
 					enemy.alive = false
 				} else if (enemy.size == this.size) {
-					this.size = 1
-					enemy.size = 1
 					this.x = this.oldX
 					this.y = this.oldY
 				}
@@ -104,7 +110,9 @@ function Player() {
 					}
 				}
 			}
-			gameState[this.x][this.y] = this
+			if (this.alive) {
+				gameState[this.x][this.y] = this
+			}
 		}
 }
 var players = []
@@ -128,6 +136,11 @@ for (var i = 0; i < players.length; i++) {
 gameState[foodX][foodY] = 2
 
 function updateClients() {
+	for (var i = 0; i < gameState.length; i++)
+		for (var j = 0; j < gameState.length; j++)
+			if (gameState[i][j].size > 1.25)
+				gameState[i][j].size -= 0.002 + gameState[i][j].size * 0.005
+
 	io.sockets.emit('state', {
 		state: gameState
 	})

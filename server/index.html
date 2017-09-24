@@ -38,7 +38,7 @@
 			})
 		}
 
-		var socket = io('http://localhost:3000')
+		var socket = io('http://10.192.57.48:3000')
 		socket.on('state', function(data) {
 
 			// Clear frame
@@ -86,11 +86,7 @@
 					}
 				}
 			}
-
-
 		})
-
-
 
 		socket.on('dead', function(data) {
 			alert("You died! Refresh to play again.")
