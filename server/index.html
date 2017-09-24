@@ -36,14 +36,14 @@
 			socket.emit('move', { direction: dir })
 		}
 
-		var socket = io('http://localhost')
+		var socket = io('http://10.186.82.204')
 		socket.on('state', function (data) {
 			console.log(data)
 			for (var i = 0; i < data.state.length; i++) {
 				for (var j = 0; j < data.state[0].length; j++) {
 					if (data.state[i][j] == 1) {
-						bunny.x = i * 50 + 10
-						bunny.y = j * 50 + 10
+						bunny.x = i * 50 + 25
+						bunny.y = j * 50 + 25
 					}
 				}
 			}

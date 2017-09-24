@@ -27,9 +27,8 @@ io.on('connection', function (socket) {
     if (data.direction == "left")
       if (posX > 0) posX--
     if (data.direction == "right")
-      if (posY < gameState.length-1) posX++
+      if (posX < gameState[0].length-1) posX++
     draw()
-    socket.emit('state', { state: gameState })
   })
 })
 
@@ -52,3 +51,8 @@ function draw() {
       gameState[i][j] = 0
   gameState[posX][posY] = 1
 }
+
+function updateClients() {
+  io.sockets.emit('state', { state: gameState })
+}
+setInterval(updateClients, 50);
