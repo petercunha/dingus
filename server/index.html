@@ -14,30 +14,16 @@
 		var rotationSpeed = 0.1;
 
 		// create a new Sprite from an image path
-		var bunny = PIXI.Sprite.fromImage('https://pixijs.github.io/examples/required/assets/basics/bunny.png')
 		var fly = PIXI.Sprite.fromImage('https://i.imgur.com/uJL46V8.png')
 
 		// center the sprite's anchor 
 		fly.anchor.set(0.5);
-		bunny.anchor.set(0.5);
 
 		// move the sprite to the center of the screen
-		bunny.x = app.renderer.width / 2
-		bunny.y = app.renderer.height / 2
 		fly.x = app.renderer.width / 2
 		fly.y = app.renderer.height / 2
 
-		app.stage.addChild(bunny);
 		app.stage.addChild(fly);
-
-		// Listen for animate update
-		app.ticker.add(function(delta) {
-			// just for fun, let's rotate mr rabbit a little
-			// delta is 1 if running at 100% performance
-			// creates frame-independent tranformation
-			bunny.rotation += rotationSpeed * delta;
-		});
-
 
 		function move(dir) {
 			socket.emit('move', { direction: dir })
@@ -48,9 +34,24 @@
 			console.log(data)
 			for (var i = 0; i < data.state.length; i++) {
 				for (var j = 0; j < data.state[0].length; j++) {
-					if (data.state[i][j] == 1) {
+					if (data.state[i][j] != 2 && data.state[i][j] != 0) {
+						var bunny = PIXI.Sprite.fromImage('https://pixijs.github.io/examples/required/assets/basics/bunny.png')
+						
+						bunny.anchor.set(0.5);
+
+						// move the sprite to the center of the screen
 						bunny.x = i * 50 + 25
 						bunny.y = j * 50 + 25
+
+						app.stage.addChild(bunny);
+
+						// Listen for animate update
+						app.ticker.add(function(delta) {
+							// just for fun, let's rotate mr rabbit a little
+							// delta is 1 if running at 100% performance
+							// creates frame-independent tranformation
+							bunny.rotation += 0.1 * delta;
+						});
 					} else if (data.state[i][j] == 2) {
 						fly.x = i * 50 + 25
 						fly.y = j * 50 + 25
@@ -61,6 +62,8 @@
 
 		socket.on('update', function(data) {
             rotationSpeed = data.rotation
+            bunny.scale.x += 0.5
+            bunny.scale.y += 0.5
         })
 
 		var dir = '';
