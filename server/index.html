@@ -1,13 +1,74 @@
-<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js"></script>
-<script>
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Game</title>
+</head>
+<body>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/4.5.6/pixi.min.js"></script>
+	<script>
 
-	function move(dir) {
-		socket.emit('move', { direction: dir })
-	}
+		var app = new PIXI.Application(800, 600, {backgroundColor : 0x1099bb});
+		document.body.appendChild(app.view);
+
+		// create a new Sprite from an image path
+		var bunny = PIXI.Sprite.fromImage('https://pixijs.github.io/examples/required/assets/basics/bunny.png')
+
+		// center the sprite's anchor point
+		bunny.anchor.set(0.5);
+
+		// move the sprite to the center of the screen
+		bunny.x = app.renderer.width / 2;
+		bunny.y = app.renderer.height / 2;
+
+		app.stage.addChild(bunny);
+
+		// Listen for animate update
+		app.ticker.add(function(delta) {
+		// just for fun, let's rotate mr rabbit a little
+		// delta is 1 if running at 100% performance
+		// creates frame-independent tranformation
+		bunny.rotation += 0.1 * delta;
+		});
 
 
-  var socket = io('http://localhost')
-  socket.on('state', function (data) {
-    console.log(data)
-  })
-</script>
+		function move(dir) {
+			socket.emit('move', { direction: dir })
+		}
+
+		var socket = io('http://localhost')
+		socket.on('state', function (data) {
+			console.log(data)
+			for (var i = 0; i < data.state.length; i++) {
+				for (var j = 0; j < data.state[0].length; j++) {
+					if (data.state[i][j] == 1) {
+						bunny.x = i * 50 + 10
+						bunny.y = j * 50 + 10
+					}
+				}
+			}
+		})
+
+		var dir = '';
+	   document.addEventListener("keydown", keyboardInput, false)
+
+	   function keyboardInput(e) {
+	   		console.log("good");
+	        if(e.keyCode == 38){
+	            dir = "up"
+	        }
+	        if (e.keyCode == 40) {
+	            dir = "down";
+	        }
+	        if (e.keyCode == 37) {
+	            dir = "left";
+	        }
+	        if(e.keyCode == 39){
+	            dir = "right";
+	        }
+	        move(dir)
+	    }
+
+	</script>
+</body>
+</html>

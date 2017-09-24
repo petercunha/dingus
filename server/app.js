@@ -33,7 +33,7 @@ io.on('connection', function (socket) {
   })
 })
 
-var posX = 0, posY = 0
+var posX = 5, posY = 5
 var gameState = [
   [0, 0, 0, 0, 0, 0, 0, 0], 
   [0, 0, 0, 0, 0, 0, 0, 0], 
